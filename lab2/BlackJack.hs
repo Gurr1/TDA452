@@ -1,6 +1,7 @@
 module BlackJack where
 import Cards
 import RunGame
+import System.Random
 
 -- A0 
 -- size (Add (Card (Numeric 2) Hearts) (Add (Card Jack Spades) Empty)) =
@@ -75,32 +76,118 @@ hand15 = Add (Card (Numeric 8) Spades)
 
 -- Part 2B1
 
--- 
+--adds the left hand to the right hand
 (<+) :: Hand -> Hand -> Hand
 (<+) Empty hand2 = hand2
 (<+) hand1 Empty = hand1
-(<+) hand1 (Add card Empty) = Add card hand1
-(<+) (Add card hand1) hand2 = (hand1 <+ hand2) <+ (Add card Empty)
+(<+) (Add card Empty) hand1 = Add card hand1
+(<+) (Add card hand1) hand2 =  (Add card Empty) <+ (hand1 <+ hand2)
 
+--confirms that the property "ontop" is mathematically associative
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 = 
         p1<+(p2<+p3) == (p1<+p2)<+p3
 
+
+-- this compares the size of hand (a)+(b) and (a+b)        
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf hand1 hand2 = (size hand1) + (size hand2) == size (hand1 <+ hand2)
 
 -- Part 2B2
 
+
+--creates a deck that contains all the cards with addAllCards&allCards
 fullDeck :: Hand
 fullDeck = addAllCards allCards Empty
 
+
+-- adds a list of cards to the hand
 addAllCards :: [Card] -> Hand -> Hand
 addAllCards [] hand = hand
-addAllCards (x:xs) hand = addAllCards xs (Add x hand)
+addAllCards (card:cards) hand = addAllCards cards (Add card hand)
 
+
+--creates a list of cards of all combinations of ranks&suits 
 allCards :: [Card]
-allCards = [Card rank suite | rank <- [Numeric 1, Numeric 2, Numeric 3, Numeric 4, Numeric 5,
+allCards = [Card rank suite | rank <- [Numeric 2, Numeric 3, Numeric 4, Numeric 5,
          Numeric 6, Numeric 7, Numeric 8, Numeric 9, Numeric 10,
          Jack, Queen, King, Ace], suite <- [Hearts, Spades, Diamonds, Clubs]]
 
 -- Part 2B3
+
+
+--draws a card from the deck to the hand 
+draw :: Hand -> Hand -> (Hand, Hand)
+draw Empty hand = error "cannot draw card from an empty deck"
+draw (Add card deck) hand = (deck, (Add card hand))
+
+-- Part 2B4
+
+--deck = shuffle fullDeck
+
+
+--creates a hand for the bank
+playBank :: Hand -> Hand
+playBank deck = playBank' deck Empty
+
+--adds cards to the bank's hand untill it has 16 or higher score.
+
+playBank' :: Hand -> Hand -> Hand
+playBank' deck hand | value hand < 16 = playBank' deck' hand'
+                    | otherwise = hand
+        where (deck', hand') = draw deck hand
+
+-- Part 2B5
+
+
+--shuffles a hand by recusivly calling the shuffle' function. 
+
+shuffle :: StdGen -> Hand -> Hand
+shuffle rand cards = shuffledHand 
+        where (originalHand, shuffledHand) = shuffle' rand (cards, Empty)
+
+
+shuffle' :: StdGen -> (Hand,Hand) -> (Hand, Hand)
+shuffle' rand (Empty, shuffled) = (Empty, shuffled)
+shuffle' rand (original, shuffled)   = shuffle' rand2 (original', shuffled')
+        where (original', shuffled') = (removeNthCard original n, (Add (getNthCard original n) shuffled))
+              (n, rand2)             = randomR (0, (size original) - 1) rand
+
+--removes the nth card from a hand by creating a new hand without the nth card
+removeNthCard :: Hand -> Integer -> Hand
+removeNthCard Empty number = Empty
+removeNthCard (Add card hand) 0 = hand 
+removeNthCard (Add card hand) number = Add card (removeNthCard hand (number-1))
+
+
+--copies the nth card in a hand
+getNthCard :: Hand -> Integer -> Card
+getNthCard hand number | number >= size hand = error "not in deck"
+getNthCard (Add card hand) 0 = card
+getNthCard (Add card hand) number = getNthCard hand (number - 1)
+
+
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h =
+       c `belongsTo` h == c `belongsTo` shuffle g h
+
+belongsTo :: Card -> Hand -> Bool
+c `belongsTo` Empty = False
+c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle rand hand = value (shuffle rand hand) == value hand
+
+main :: IO()
+main = runGame implementation
+
+implementation = Interface
+  { iEmpty    = empty
+  , iFullDeck = fullDeck
+  , iValue    = value
+  , iGameOver = gameOver
+  , iWinner   = winner 
+  , iDraw     = draw
+  , iPlayBank = playBank
+  , iShuffle  = shuffle
+  }
