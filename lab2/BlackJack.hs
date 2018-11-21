@@ -18,7 +18,7 @@ empty = Empty
 value :: Hand -> Integer        
 value hand | initialValue hand > 21 = 
     initialValue hand - ((numberOfAces hand) * 10)
-value hand | otherwise = initialValue hand
+value hand = initialValue hand
 
 -- Calulates the initial hand value, before any Ace values are subtracted
 initialValue :: Hand -> Integer
@@ -28,11 +28,10 @@ initialValue (Add (Card rank suite) hand) =
 
 -- Calculates how many aces there are in a hand
 numberOfAces :: Hand -> Integer
-numberOfAces (Add (Card rank suite) Empty) = 0
+numberOfAces Empty = 0
 numberOfAces (Add (Card rank suite) hand) | 
         valueRank rank == 11 = 1 + numberOfAces hand
-numberOfAces (Add (Card rank suite) hand) | 
-        otherwise            = numberOfAces hand
+numberOfAces (Add (Card rank suite) hand) = numberOfAces hand
 
 -- calculates how much a rank is worth in points.
 valueRank :: Rank -> Integer
@@ -49,7 +48,7 @@ valueCard (Card rank suite) = valueRank rank
 --Finds if a hand has gone bust. 
 gameOver :: Hand -> Bool
 gameOver hand | value hand > 21 = True
-              | otherwise  = False
+gameOver hand                   = False
 
 
 --A4
@@ -61,14 +60,47 @@ gameOver hand | value hand > 21 = True
 winner :: Hand -> Hand -> Player
 winner guest bank | value guest <= value bank && not (gameOver bank) = Bank
 winner guest bank | not (gameOver guest) = Guest
-winner guest bank | otherwise = Bank
+winner guest bank= Bank
 
-hand_19 = Add (Card (Numeric 8) Spades) 
+hand19 = Add (Card (Numeric 8) Spades) 
         (Add (Card Ace Hearts) Empty)
 
-hand_bust = Add (Card (Numeric 10) Spades) 
+handBust = Add (Card (Numeric 10) Spades) 
         (Add (Card King Hearts)
         (Add (Card (Numeric 4) Spades) Empty))
 
-hand_15 = Add (Card (Numeric 8) Spades) 
+hand15 = Add (Card (Numeric 8) Spades) 
         (Add (Card (Numeric 7) Hearts) Empty)
+
+
+-- Part 2B1
+
+-- 
+(<+) :: Hand -> Hand -> Hand
+(<+) Empty hand2 = hand2
+(<+) hand1 Empty = hand1
+(<+) hand1 (Add card Empty) = Add card hand1
+(<+) (Add card hand1) hand2 = (hand1 <+ hand2) <+ (Add card Empty)
+
+prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
+prop_onTopOf_assoc p1 p2 p3 = 
+        p1<+(p2<+p3) == (p1<+p2)<+p3
+
+prop_size_onTopOf :: Hand -> Hand -> Bool
+prop_size_onTopOf hand1 hand2 = (size hand1) + (size hand2) == size (hand1 <+ hand2)
+
+-- Part 2B2
+
+fullDeck :: Hand
+fullDeck = addAllCards allCards Empty
+
+addAllCards :: [Card] -> Hand -> Hand
+addAllCards [] hand = hand
+addAllCards (x:xs) hand = addAllCards xs (Add x hand)
+
+allCards :: [Card]
+allCards = [Card rank suite | rank <- [Numeric 1, Numeric 2, Numeric 3, Numeric 4, Numeric 5,
+         Numeric 6, Numeric 7, Numeric 8, Numeric 9, Numeric 10,
+         Jack, Queen, King, Ace], suite <- [Hearts, Spades, Diamonds, Clubs]]
+
+-- Part 2B3
