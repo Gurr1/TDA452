@@ -154,8 +154,21 @@ type Pos = (Int,Int)
   -- * E1
   
 blanks :: Sudoku -> [Pos]
-blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0] 
+--generates a pos pair for each row with the cordinate, then each tile in the row if the cell is nothing
+blanks s = [(y,x) | (y, row) <- zip [0..] (rows s), 
+                    (x, cell) <- zip [0..] row, 
+                    isNothing cell]
+
+prop_blanks_allBlanks :: Sudoku -> [Pos] -> [[[[Maybe Int]]]]
+prop_blanks_allBlanks (Sudoku s) positions = [[[[ a 
+                        | a <- row ]
+                        | row <- s ]
+                        | c <- [0..9] ]
+                        | b <- [0..9] ]
   
+
+--nothingAt :: Sudoku -> [Pos]  -> Bool
+--nothingAt a b = sudoku 
   --prop_blanks_allBlanks :: ...
   --prop_blanks_allBlanks =
   
@@ -164,6 +177,4 @@ blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0]
   
 (!!=) :: [a] -> (Int,a) -> [a]
 xs !!= (i,y) = undefined
-  
-    
-    
+
