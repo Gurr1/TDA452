@@ -153,8 +153,8 @@ type Pos = (Int,Int)
   
   -- * E1
   
-blanks :: Sudoku -> [Pos]
-blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0] 
+--blanks :: Sudoku -> [Pos]
+--blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0] 
   
   --prop_blanks_allBlanks :: ...
   --prop_blanks_allBlanks =
@@ -163,7 +163,16 @@ blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0]
   -- * E2
   
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = undefined
-  
-    
-    
+xs !!= (i,y) | i > length xs || i < 0 = error "index out of bounds"
+xs !!= (i,y) = l1 ++ (y : tail l2)
+              where (l1,l2) = (splitAt i xs)
+
+-- Finish Writing these
+prop_bangBangEquals_correct :: [a] -> Bool
+prop_bangBangEquals_correct xs = hasCorrectLength 
+
+hasCorrectLength :: [a] -> [a] -> Bool
+hasCorrectLength list1 list2 = length list1 == length list2
+
+replacesValue :: (Int, a) -> [a] -> Bool
+replacesValue (i, y) list = (list !! i) == y
