@@ -154,9 +154,7 @@ hasCorrectCells block = length block == 9
 type Pos = (Int,Int)
   
   -- * E1
-  
---blanks :: Sudoku -> [Pos]
---blanks (Sudoku sudoku) = [(0,a) | a <- sudoku !! 0] 
+
 blanks :: Sudoku -> [Pos]
 --generates a pos pair for each row with the cordinate, then each tile in the row if the cell is nothing
 blanks s = [(y,x) | (y, row) <- zip [0..] (rows s), 
@@ -173,10 +171,6 @@ prop_blanks_allBlank sudoku = and [(hasValue sudoku b) == Nothing | b <- blankSp
 
   
 
---nothingAt :: Sudoku -> [Pos]  -> Bool
---nothingAt a b = sudoku 
-  --prop_blanks_allBlanks :: ...
-  --prop_blanks_allBlanks =
   
   
   -- * E2
@@ -258,15 +252,11 @@ isSolutionOf solution start  = isDone solution &&
                             (concat [a | a <- (extractRow solution)])
 
 
-                            --F4
+                            
 isDone :: Sudoku -> Bool
 isDone sudoku = isOkay sudoku && isFilled sudoku && null (blanks sudoku)
 
-{--property which checks if the solve method is sound
-prop_SolveSound :: Sudoku -> Property
-prop_SolveSound sud = isJust(solve sud) ==> (isSolutionOf (fromJust (solve sud)) sud)
--}
-
+--F4
 
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound sud = isSudoku sud && isOkay sud && isJust solved ==> 
