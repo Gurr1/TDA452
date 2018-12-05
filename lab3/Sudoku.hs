@@ -326,11 +326,11 @@ update sudoku (x, y) value = Sudoku (extractRow sudoku !!= (x, a !!= (y, value))
                                       where a = extractRow sudoku !! x
 
 validPosition :: Pos -> Bool
-validPosition (x, y) | (x < 0 && x > 8) && (y < 0 && y > 8) = False
+validPosition (x, y) | (x < 0  || x > 8) || (y < 0 || y > 8) = False
                       | otherwise = True
 
 prop_update_updated :: Sudoku -> Pos -> Maybe Int -> Property
-prop_update_updated sudoku pos value = validPosition ==> hasValue (update sudoku pos value) pos == value
+prop_update_updated sudoku pos value = validPosition pos ==> hasValue (update sudoku pos value) pos == value
 
 
 -- E4
@@ -340,6 +340,9 @@ candidates s p = filter (cand s p) (map Just [1..9])
 cand :: Sudoku -> Pos -> Maybe Int -> Bool
 cand s p n | isOkay(update s p n) = True
            | otherwise = False
+        
+prop_candidates_correct :: Sudoku -> Pos -> Property
+prop_candidates_correct :: 
 
 solve :: Sudoku -> Maybe Sudoku
 solve sudoku = solve' sudoku (blanks sudoku) 
