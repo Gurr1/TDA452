@@ -95,117 +95,7 @@ prop_Sudoku = isSudoku
   
 type Block = [Maybe Int]
   
-  
-  -- * D1
-
-  
-  --TODO 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  -- * D2
+--D
   
 -- Checks if the given block is valid according to sudoku rules
   
@@ -256,13 +146,7 @@ hasCorrectnBlocks blocks = length blocks == 9
 hasCorrectCells :: Block -> Bool
 hasCorrectCells block = length block == 9
 
--- * D3
 
-  
-  
-  ---- Part A ends here --------------------------------------------------------
-  ------------------------------------------------------------------------------
-  ---- Part B starts here ------------------------------------------------------
   
   
   -- | Positions are pairs (row,column),
@@ -344,6 +228,7 @@ cand s p n | isOkay(update s p (Just n)) = True
 prop_candidates_correct :: Sudoku -> Pos -> Property
 prop_candidates_correct s p = validPosition p ==> all isOkay (map (update s p . Just) (candidates s  p ))
 
+--F1
 solve :: Sudoku -> Maybe Sudoku
 solve sudoku = solve' sudoku (blanks sudoku) 
 
@@ -355,18 +240,88 @@ solve' sudoku (p:ps) = listToMaybe (catMaybes newSudoku)
          where 
           newSudoku = [solve' (update sudoku p (Just c)  ) ps | c <- candidates sudoku p]
 
-
+--F2
 readAndSolve :: FilePath -> IO()
 readAndSolve path = do a <- (readSudoku path)
                        let sudoku = solve a
                        if isNothing sudoku
                         then error "could not solve sudoku"
                        else printSudoku (fromJust sudoku)
-
+--F3
 isSolutionOf :: Sudoku -> Sudoku -> Bool
-isSolutionOf start solution = --isOkay solution && 
+isSolutionOf solution start  = isDone solution &&
+  --isOkay solution && 
                               --isFilled solution &&
                               and [fst c == snd c || isNothing (fst c) | c <- b]
                   where b = zip
                             (concat [a | a <- (extractRow start)])
                             (concat [a | a <- (extractRow solution)])
+
+
+                            --F4
+isDone :: Sudoku -> Bool
+isDone sudoku = isOkay sudoku && isFilled sudoku && null (blanks sudoku)
+
+{--property which checks if the solve method is sound
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound sud = isJust(solve sud) ==> (isSolutionOf (fromJust (solve sud)) sud)
+-}
+
+
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound sud = isSudoku sud && isOkay sud && isJust solved ==> 
+                      fromJust solved `isSolutionOf` sud
+                      where solved = solve sud
+
+{-
+
+       _                                           _               
+      | |                                         (_)              
+ _ __ | | ___  __ _ ___  ___        _ __ _____   ___  _____      __
+| '_ \| |/ _ \/ _` / __|/ _ \      | '__/ _ \ \ / / |/ _ \ \ /\ / /
+| |_) | |  __/ (_| \__ \  __/      | | |  __/\ V /| |  __/\ V  V / 
+| .__/|_|\___|\__,_|___/\___|      |_|  \___| \_/ |_|\___| \_/\_/  
+| |                                                                
+|_|                                                                
+                                    _       _                      
+                                   | |     | |                     
+             ___  _   _ _ __       | | __ _| |__  ___              
+            / _ \| | | | '__|      | |/ _` | '_ \/ __|             
+           | (_) | |_| | |         | | (_| | |_) \__ \             
+            \___/ \__,_|_|         |_|\__,_|_.__/|___/             
+                                                                   
+                                           
+                                                                              
+                                                                              
+                                   ...'',,;;:::;'..                           
+                                  ..,;:::clloodoolc;'..                       
+                               ..',;;;;;;:cccllllllllc:,.                     
+                       .'..   .,;;,''''''...',;ccllllcc:,.                    
+                      ':cc;. .;cc:;,,,,;;:;,''':loolcc:;,.                    
+                     .;clc,.':loolc,'.. .,;,;:ldxxdl:,,,'.                    
+                     .:cc:'';cloddolcc:;;:;',:lxxol:,....                     
+                     .:lc'.;cloddddoollllc:::clol;..';,.                      
+                     .:c'.',:ldddxxxddooodoollool;..''''                      
+                     .''..';cloddxxxkkxxxdlcllodl:;;;,..                      
+                   ......',;cccodxkkkxxxocllloxxocccc:.                       
+               ..';:co;..';::::codoc;;cc:;:ccoxxooolc,.                       
+         ...',;:cclccdk:..,,;;;cl:,'.',,,'',::::lddo:.                        
+      .';:::cc:clllcc:xx. ..'',::;cl:;;::;,,,...:oo:.                         
+    .'cllcc::cccclccc:cko. .....';looc:cc:;;;,..';,.                          
+  .,coollclcc::::cccc::lOd.  ....,:lol;,,;;;;,''..                            
+.;loooolllcclc:;;:::::::o0O;    .';:::;,,',;;'..              'clc.           
+looooooooollccc::;;;:::::l0Kd'   .'',;;,,,,'...         ..;llcdOOOxdc..       
+llooooodooddlccccc;,;;::::l0NKd,.  .........';;.       .:okOxdkkkO00Okxl.     
+looooodoloddoooolcc:,,;::c:l0NNKxc. ..''..';::c;.      .:oxdodxddkkxkOOkc.    
+ooloddolloddooddoolc:;,;::::l0NNXKkl:lc,.  .,;:c:.     .lddxxxdollokOkOK0o'   
+ooloddooolodddddddoolc;',;;::o0NN0c.        .;:cc;.    'ldx0OdododOKOO00Okx;  
+llloooodoooddooddddddol:'',:c:oOx'         .;:::c:. .,,;cokOkddxO00Okkddxxl.  
+cllollooolloddoodooodddoc,,,;:c;.         'ccc::c:. 'c:coxkkxkO0KKxdxooxkx,   
+lllllcloooodxdloddoodddddo:;,;::.  .;,,:ldlccc::::. .';oxkOOO00KKOxddxkkOO:   
+olodolodddolooddoddddddddddc;,,::..l000XXXOlcc::::'..':dkO0000KKK0OOOOxxOo.   
+ccloolllllolodxddxdodxddddddl:,,;;lOKK00KXXxcc:::;;,'':dk00KKKKKKKK00O:';.    
+::;;:::ccccllooloooodddddddddoc,',;o0KKKKXNKdcccc:;;,;lxkO0KKKKKKKK0Oo,.      
+,,,;;;;;;:::cloloolodoodddoloodl;',:xKKKKXXXklccc:;,,coodxxO0KXXXXKOo,,,.     
+
+
+-}
