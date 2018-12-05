@@ -334,15 +334,15 @@ prop_update_updated sudoku pos value = validPosition pos ==> hasValue (update su
 
 
 -- E4
-candidates :: Sudoku -> Pos -> [Maybe Int]
-candidates s p = filter (cand s p) (map Just [1..9])
+candidates :: Sudoku -> Pos -> [Int]
+candidates s p = filter (cand s p)  [1..9]
 
-cand :: Sudoku -> Pos -> Maybe Int -> Bool
-cand s p n | isOkay(update s p n) = True
+cand :: Sudoku -> Pos -> Int -> Bool
+cand s p n | isOkay(update s p (Just n)) = True
            | otherwise = False
         
 prop_candidates_correct :: Sudoku -> Pos -> Property
-prop_candidates_correct :: 
+prop_candidates_correct s p = validPosition p ==> all isOkay (map (update s p . Just) (candidates s  p ))
 
 solve :: Sudoku -> Maybe Sudoku
 solve sudoku = solve' sudoku (blanks sudoku) 
@@ -353,7 +353,7 @@ solve' sudoku [] | not (isOkay sudoku) || not (isSudoku sudoku) = Nothing
                  | otherwise = Just sudoku
 solve' sudoku (p:ps) = listToMaybe (catMaybes newSudoku)
          where 
-          newSudoku = [solve' (update sudoku p c) ps | c <- candidates sudoku p]
+          newSudoku = [solve' (update sudoku p (Just c)  ) ps | c <- candidates sudoku p]
 
 
 readAndSolve :: FilePath -> IO()
