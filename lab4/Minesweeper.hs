@@ -1,11 +1,10 @@
 module Minesweeper where
 
 import Data.Char
-import Data.Maybe
 import System.Random
 import Data.List
 
-data Tile = Numeric Int | Flag | Empty | Bomb
+data Tile = Num Int | Flag | Empty | Bomb | Unknown
             deriving (Eq, Show)
 
 newtype Field = Field {rows :: [[Tile]] }
@@ -16,8 +15,9 @@ type Pos = (Int, Int)
 extractRow :: Field -> [[Tile]]
 extractRow (Field rows) = rows
 
-createEmptyField :: Int -> Int -> Field
-createEmptyField xSize ySize = Field (replicate ySize (replicate xSize Empty))
+createFieldOf :: Int -> Int -> Tile -> Field
+createFieldOf xSize ySize tile = Field (replicate ySize (replicate xSize tile))
+
 
 --getSpace ::
 
@@ -36,7 +36,7 @@ xs !!= (i,y) = l1 ++ (y : tail l2)
 --Takes 
 createField :: Int -> Int -> StdGen -> Field
 createField size nMines r= placeMines f bp
-                                  where f = createEmptyField size size
+                                  where f = createFieldOf size size Empty
                                         bp = randoml 0 (size-1) nMines r
 
 
@@ -76,19 +76,29 @@ placeMines :: Field -> [(Int,Int)] -> Field
 placeMines field [] = field
 placeMines field (bp:bps) = placeMines (replaceTile field Bomb bp) bps
 
---reveal :: pos -> mine
+reveal :: Pos -> Field -> Tile
+reveal (x, y) (Field field) | x > length field || y > length (field !! 0) || x < 0 || y < 0 = error "out of bounds"
+                    | otherwise = (field !! x) !! y
 
-printField :: Field -> IO()
-printField field = putStr (concat [ concat [toString num | num <- row]
-                    ++ "\n" | row <- rows])
-                    where rows = extractRow field
-
-toString :: Tile -> String
-toString Flag = "P"
-toString Empty = "."
-toString Bomb = "*"
+numberBombsInProximity :: Pos -> Field -> Int
+numberBombsInProximity (x, y) (Field field) = sum [if reveal (x + c, y + d) (Field field) == Bomb
+                                          then 1 else 0 | c <- a, d <- b]
+                                          where (a, b) = correctList (x, y) (length field) (length (field !! 0))
 
 
+correctList :: Pos -> Int -> Int -> ([Int], [Int])
+correctList (x, y) xl yl = (b, d)
+                        where a = 0: [-1 | not (x == 0)]
+                              b = a ++ [1 | not (x == xl - 1)]
+                              c = 0: [-1 | not (y == 0)]
+                              d = c ++ [1 | not (y == yl - 1)]
 
---countMines :: pos -> Integer
+
+click :: Pos -> Field -> Field -> Field
+click (x, y) (Field reference) shown | a == 0 && 
+                                    where nb = numberBombsInProximity (x, y) (Field reference)
+                                          (dx, dy) = correctList (x, y) (length reference) (length (reference !! 0))
+                                          rev = reveal (x, y) reference
+                                          
+
 
