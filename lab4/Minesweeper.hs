@@ -3,6 +3,7 @@ module Minesweeper where
 import Data.Char
 import System.Random
 import Data.List
+import Test.QuickCheck
 
 data Tile = Num Int | Flag | Empty | Bomb | Unknown
             deriving (Eq, Show)
@@ -55,9 +56,9 @@ randoml min max n r | a `elem` b = randoml min max n r2
                               a = generateRandomPair min max r
                               b = randoml min max (n-1) r2
 
-prop_list_unique :: Int -> Int -> Int -> StdGen -> Bool
-prop_list_unique min max n r = and [a `notElem` l| a <- l]
-                                where l = randoml min max n r
+prop_list_unique :: Positive Int -> Positive Int -> Positive Int -> Int -> Bool
+prop_list_unique (Positive min) (Positive max) (Positive n) r = and [a `notElem` l| a <- l]
+                                    where l = randoml min max n (mkStdGen r)
 
 prop_correct_length :: Int -> Int -> Int -> StdGen -> Bool
 prop_correct_length min max n r = length (randoml min max n r) == n
@@ -85,6 +86,12 @@ numberBombsInProximity (x, y) (Field field) = sum [if reveal (x + c, y + d) (Fie
                                           then 1 else 0 | c <- a, d <- b]
                                           where (a, b) = correctList (x, y) (length field) (length (field !! 0))
 
+unknownInProximity :: Pos -> Field -> [Pos]
+unknownInProximity (x, y) (Field field) = 
+      [(x + c, y + d) | c <- a, d <- b, 
+      reveal (x + c, y + d) (Field field) == Unknown || 
+      reveal (x + c, y + d) (Field field) == Flag]
+      where (a, b) = correctList (x, y) (length field) (length (field !! 0))
 
 correctList :: Pos -> Int -> Int -> ([Int], [Int])
 correctList (x, y) xl yl = (b, d)
@@ -93,12 +100,12 @@ correctList (x, y) xl yl = (b, d)
                               c = 0: [-1 | not (y == 0)]
                               d = c ++ [1 | not (y == yl - 1)]
 
-
-click :: Pos -> Field -> Field -> Field
-click (x, y) (Field reference) shown | a == 0 && 
-                                    where nb = numberBombsInProximity (x, y) (Field reference)
-                                          (dx, dy) = correctList (x, y) (length reference) (length (reference !! 0))
-                                          rev = reveal (x, y) reference
-                                          
-
-
+click :: [Pos] -> Field -> Field -> Field
+click [] reference shown = shown
+click (p:pos) (Field reference) shown 
+                              | rev == Bomb = click pos (Field reference) shown
+                              | nb == 0     = click (pos ++ (unknownInProximity p s)) (Field reference) s
+                              | otherwise   = click pos (Field reference) $ replaceTile shown (Num nb) p
+                  where rev = reveal p (Field reference)
+                        nb = numberBombsInProximity p (Field reference)
+                        s = replaceTile shown rev p

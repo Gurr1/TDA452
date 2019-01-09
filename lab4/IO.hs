@@ -19,13 +19,16 @@ toCharacter (Num a) = "[" ++ show a ++ "]"
 
 --toTile :: [Char] -> Tile
 --toTile 
+startGame :: Int -> Int -> Int -> IO()
+startGame size nBombs seed = play (createField size nBombs (mkStdGen seed)) 
+                            $ createFieldOf size size Unknown
 
 play :: Field -> Field -> IO()
 play reference shown =  do printField shown
                            putStrLn "choose a x position"
-                           x <- getLine
-                           putStrLn "choose a y position"
                            y <- getLine
+                           putStrLn "choose a y position"
+                           x <- getLine
                            putStrLn "Click or Flag? (C/F)"
                            tile <- getLine
                            if not (tile == "C" || tile ==  "F" || tile == "c" || tile == "f")
@@ -49,4 +52,4 @@ play reference shown =  do printField shown
                                             putStrLn "you lost"
                                             printField reference
                                         else 
-                                            play reference $ replaceTile shown (reveal (read x, read y) reference) (read x, read y)
+                                            play reference $ click [(read x, read y)] reference shown
