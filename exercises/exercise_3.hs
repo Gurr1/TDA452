@@ -69,4 +69,42 @@ isPrime :: Int -> Bool
 isPrime a = a `elem` sieve [2..100]
  
 sumOfPrimes :: Int -> Bool
-sumOfPrimes a = 
+sumOfPrimes a = or [a == d + c | d <- b,
+                                 c <- b]
+                where b = sieve [2..100]
+
+prop_all4_to100 :: [Bool]
+prop_all4_to100 = (map sumOfPrimes [4, 6..100])
+
+--- 6 ---
+
+occursIn :: Eq a =>  a -> [a] -> Bool
+occursIn x xs = or [x == y | y <- xs]
+
+allOccursIn :: Eq a => [a] -> [a] -> Bool
+allOccursIn xs ys = and [x `occursIn` ys | x <- xs]
+
+sameElements :: Eq a => [a] -> [a] -> Bool
+sameElements xs ys = isPermutation xs ys
+
+numOccurences :: Eq a => a -> [a] -> Int
+numOccurences x xs = sum [if x == y then 1 else 0 | y <- xs]
+
+bag :: Eq a => [a] -> [(a, Int)]
+bag xs = removeDuplicates [(x, numOccurences x xs) | x <- xs]
+
+--- 7 ---
+
+positions :: [a] -> [(a, Int)]
+positions xs = zip xs [1..]
+
+firstPosition :: Eq a => a -> [a] -> Int
+firstPosition x xs = head [p | (y, p) <- positions xs, y == x]
+
+remove1st :: Eq a => a -> [a] -> [a]
+remove1st x xs = a ++ (drop 1 b)
+                    where (a, b) = splitAt (firstPosition x xs) xs
+
+remove :: Eq a => Int -> a -> [a] -> [a]
+remove 0 x xs = xs
+remove n x xs = remove (n-1) x (remove1st x xs)
