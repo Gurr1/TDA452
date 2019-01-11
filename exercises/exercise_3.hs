@@ -29,3 +29,44 @@ prop_reverse :: [Int] -> Bool
 prop_reverse xs = isPermutation xs (reverse xs)
 
 --- 2 ---
+
+duplicates :: Eq a => [a] -> Bool
+duplicates [] = False
+duplicates (a:as) | a `notElem` as = duplicates as
+duplicates as = True
+
+removeDuplicates :: Eq a => [a] -> [a]
+removeDuplicates []   = []
+removeDuplicates (a:as) = (if a `elem` as then [] else [a]) ++ removeDuplicates as
+
+prop_duplicatesRemoved :: [Integer] -> Bool
+prop_duplicatesRemoved xs = not (duplicates (removeDuplicates xs))
+
+--- 3 ---
+
+pascal :: Int -> [Int]
+pascal n = [over (n-1) a | a <- [0..(n-1)]]
+
+over :: Int -> Int -> Int
+over n k = factorial n `div` (factorial k * factorial (n - k))
+
+factorial :: Int -> Int
+factorial 0 = 1
+factorial a = factorial (a-1) * a
+
+--- 4 ---
+
+crossOut :: Int -> [Int] -> [Int]
+crossOut a bs = [b | b <- bs, (b `mod` a) /= 0]
+
+sieve :: [Int] -> [Int]
+sieve [] = []
+sieve (a:as) = a : sieve (crossOut a as)
+
+--- 5 --- 
+
+isPrime :: Int -> Bool
+isPrime a = a `elem` sieve [2..100]
+ 
+sumOfPrimes :: Int -> Bool
+sumOfPrimes a = 
